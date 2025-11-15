@@ -107,16 +107,44 @@ def retrieve_reddit_posts(state: State) -> State:
     return {"reddit_post_data": reddit_post_data}        
 
 def analyze_google_results(state: State) -> State:
-    return {"google_analysis": ""}
+    print("Analyzing Google results...")
+    user_question = state.get("user_question", "")
+    google_results = state.get("google_results", "")
+    messages = get_google_analysis_messages(user_question, google_results)
+    reply = llm.invoke(messages)
+    return {"google_analysis": reply}
 
 def analyze_bing_results(state: State) -> State:
-    return {"bing_analysis": ""}
+    print("Analyzing Bing results...")
+    user_question = state.get("user_question", "")
+    bing_results = state.get("bing_results", "")
+    messages = get_bing_analysis_messages(user_question, bing_results)
+    reply = llm.invoke(messages)
+    return {"bing_analysis": reply}
 
 def analyze_reddit_results(state: State) -> State:
-    return {"reddit_analysis": ""}
+    print("Analyzing Reddit results...")
+    user_question = state.get("user_question", "")
+    reddit_results = state.get("reddit_results", "")
+    reddit_post_data = state.get("reddit_post_data", "")
+    messages = get_reddit_analysis_messages(user_question, reddit_results, reddit_post_data)
+    reply = llm.invoke(messages)
+    return {"reddit_analysis": reply}
 
 def synthesize_analyses(state: State) -> State:
-    return {"final_answer": ""}
+    print("Combining all results together...")
+    user_question = state.get("user_question", "")
+    google_analysis = state.get("google_analysis", "")
+    bing_analysis = state.get("bing_analysis", "")
+    reddit_analysis = state.get("reddit_analysis", "")
+
+    messages = get_synthesis_messages(
+        user_question, google_analysis, bing_analysis, reddit_analysis
+    )
+    reply = llm.invoke(messages)
+    final_answer = reply.content
+
+    return {"final_answer": final_answer, "messages":[{"role":"assistant","content":final_answer}]} 
 
 
 graph_builder = StateGraph(State)
