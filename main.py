@@ -6,7 +6,7 @@ from langchain.chat_models import init_chat_model
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from typing import List
-from web_operations import serp_search, reddit_search_api
+from web_operations import serp_search, reddit_search_api, reddit_post_retrieval
 from prompts import (
     get_reddit_analysis_messages,
     get_google_analysis_messages,
@@ -87,7 +87,24 @@ def analyze_reddit_posts(state: State) -> State:
     return {"selected_reddit_urls": selected_urls}
 
 def retrieve_reddit_posts(state: State) -> State:
-    return {"reddit_post_data": ""}
+    selected_urls = state.get("selected_reddit_urls", [])
+
+    if not selected_urls:
+        return {"reddit_post_data": []}
+    
+    print(f"Processing {len(selected_urls)} Reddit URLs for post retrieval...")
+
+    reddit_post_data = reddit_post_retrieval(selected_urls)
+
+    if reddit_post_data:
+        print("Successfully got {len(reddit_post_data)} posts")
+
+    else:
+        print("Failed to get post data")
+        reddit_post_data = []
+
+    print(reddit_post_data)
+    return {"reddit_post_data": reddit_post_data}        
 
 def analyze_google_results(state: State) -> State:
     return {"google_analysis": ""}
