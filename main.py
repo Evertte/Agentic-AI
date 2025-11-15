@@ -6,6 +6,7 @@ from langchain.chat_models import init_chat_model
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from typing import List
+from web_operations import serp_search 
 
 load_dotenv()
 
@@ -29,15 +30,17 @@ def google_search(state: State) -> State:
     user_question = state.get("user_question", "")
     print(f"Performing Google search for: {user_question}")
 
-    google_results = []
-    
+    google_results = serp_search(user_question, engine="google")
+    print(f"Google search results: {google_results}")
+
     return {"google_results": google_results}
 
 def bing_search(state: State) -> State:
     user_question = state.get("user_question", "")
     print(f"Performing Bing search for: {user_question}")
 
-    bing_results = []
+    bing_results = serp_search(user_question, engine="bing")
+    print(f"Bing search results: {bing_results}")
 
     return {"bing_results": bing_results}
 
