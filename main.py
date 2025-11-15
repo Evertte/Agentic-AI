@@ -7,6 +7,13 @@ from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from typing import List
 from web_operations import serp_search, reddit_search_api
+from prompts import (
+    get_reddit_analysis_messages,
+    get_google_analysis_messages,
+    get_bing_analysis_messages,
+    get_synthesis_messages,
+    get_reddit_url_analysis_messages,
+)
 
 load_dotenv()
 
@@ -25,6 +32,9 @@ class State(TypedDict):
     reddit_analysis: str | None
     final_answer: str | None
 
+
+class RedditURLAnalysis(BaseModel):
+    selected_urls: List[str] = Field(description="List of Reddit URLs that contain valuable information for answering the user's question.")
 
 def google_search(state: State) -> State:
     user_question = state.get("user_question", "")
@@ -54,7 +64,27 @@ def reddit_search(state: State) -> State:
     return {"reddit_results": reddit_results}
 
 def analyze_reddit_posts(state: State) -> State:
-    return {"selected_reddit_urls": []}
+    user_question = state.get("user_question", "")
+    reddit_results = state.get("reddit_results", "")
+
+    if not reddit_results:
+        return {"selected_reddit_urls": []}
+    
+    structured_llm = llm.with_structured_output(RedditURLAnalysis)
+    messages = get_reddit_url_analysis_messages(user_question, reddit_results) 
+
+    try:
+        analysis = structured_llm.invoke(messages)
+        selected_urls = analysis.selected_urls
+
+        for i, url in enumerate(selected_urls, start=1):
+            print(f"Selected Reddit URL {i}: {url}")
+
+    except Exception as e:
+        print(f"Error during Reddit URL analysis: {e}")
+        selected_urls = []
+
+    return {"selected_reddit_urls": selected_urls}
 
 def retrieve_reddit_posts(state: State) -> State:
     return {"reddit_post_data": ""}
